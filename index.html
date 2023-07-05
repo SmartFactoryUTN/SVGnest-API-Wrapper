@@ -323,10 +323,6 @@
         handleFile(e.target.files[0]);
       }
 
-      // bininput.onchange = function (e) {
-      //   handleBin(e.target.files[0]);
-      // }
-
       function handleBin(svg) {
         bininput.onchange = function (e) {
           var file = e.target.files[0];
@@ -345,30 +341,23 @@
                 return;
               }
               var newBin = null;
-              // var parser = new DOMParser();
-              // var svgDocument = parser.parseFromString(reader.result, 'image/svg+xml');
-              // var parsedSvg = window.SvgNest.parsesvg(reader.result);
-			        var parsedSvg = SvgParser.load(reader.result);
+              var parsedSvg = SvgParser.load(reader.result);
               SvgParser.clean();
 
               // var parsedSvg = svgDocument.documentElement;
-              console.log('reader result: ', reader.result);
-              console.log('parsedSvg: ', parsedSvg.childNodes[0]);
               for (var i = 0; i < svg.childNodes.length; i++) {
                 const node = svg.childNodes[i];
                 if (node.nodeType != 1) {
                   continue;
                 }
-                console.log('childNode[', i, ']: ', node);
                 if (parsedSvg.childNodes[0].toString() == node.toString()) {
-                  console.log('equality confirmed!')
                   newBin = node;
                   break;
                 }
               }
               if (!newBin) {
                 console.error('bin not found in parts svg');
-                return ;
+                return;
               }
               window.SvgNest.setbin(newBin);
               console.log('bin successfully loaded');
@@ -441,33 +430,85 @@
         reader.readAsText(file);
       };
 
-      function attachSvgListeners(svg) {
-        // attach event listeners
-        for (var i = 0; i < svg.childNodes.length; i++) {
-          var node = svg.childNodes[i];
-          if (node.nodeType == 1) {
-            node.onclick = function () {
-              if (display.className == 'disabled') {
-                return;
-              }
-              var currentbin = document.querySelector('#select .active');
-              if (currentbin) {
-                var className = currentbin.getAttribute('class').replace('active', '').trim();
-                if (!className)
-                  currentbin.removeAttribute('class');
-                else
-                  currentbin.setAttribute('class', className);
-              }
+      sendresult.onclick = function (e) {
+        var bins = document.getElementById('bins');
+        console.log('sendresult clicked');
 
-              window.SvgNest.setbin(this);
-              this.setAttribute('class', (this.getAttribute('class') ? this.getAttribute('class') + ' ' : '') + 'active');
-
-              start.className = 'button start animated bounce';
-              message.className = '';
-            }
-          }
+        if (bins.children.length == 0) {
+          console.error('No SVG to export');
+          return;
         }
+
+        var svg = display.querySelector('svg');
+        if (!svg) {
+          svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+        }
+
+        svg = svg.cloneNode(false);
+
+        // maintain stroke, fill etc of input
+        if (SvgNest.style) {
+          svg.appendChild(SvgNest.style);
+        }
+
+        var binHeight = parseInt(bins.children[0].getAttribute('height'));
+
+        for (var i = 0; i < bins.children.length; i++) {
+          var b = bins.children[i];
+          var group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          group.setAttribute('transform', 'translate(0 ' + binHeight * 1.1 * i + ')');
+          for (var j = 0; j < b.children.length; j++) {
+            group.appendChild(b.children[j].cloneNode(true));
+          }
+
+          svg.appendChild(group);
+        }
+
+        var output;
+        if (typeof XMLSerializer != 'undefined') {
+          output = (new XMLSerializer()).serializeToString(svg);
+        }
+        else {
+          output = svg.outerHTML;
+        }
+        console.log('output: ', output);
+
+        fetch('http://localhost:3000/uploadSvg', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain'
+          },
+          body: output
+        })
       }
+
+      // function attachSvgListeners(svg) {
+      //   // attach event listeners
+      //   for (var i = 0; i < svg.childNodes.length; i++) {
+      //     var node = svg.childNodes[i];
+      //     if (node.nodeType == 1) {
+      //       node.onclick = function () {
+      //         if (display.className == 'disabled') {
+      //           return;
+      //         }
+      //         var currentbin = document.querySelector('#select .active');
+      //         if (currentbin) {
+      //           var className = currentbin.getAttribute('class').replace('active', '').trim();
+      //           if (!className)
+      //             currentbin.removeAttribute('class');
+      //           else
+      //             currentbin.setAttribute('class', className);
+      //         }
+
+      //         window.SvgNest.setbin(this);
+      //         this.setAttribute('class', (this.getAttribute('class') ? this.getAttribute('class') + ' ' : '') + 'active');
+
+      //         start.className = 'button start animated bounce';
+      //         message.className = '';
+      //       }
+      //     }
+      //   }
+      // }
 
       var prevpercent = 0;
       var startTime = null;
@@ -504,10 +545,8 @@
       function renderSvg(svglist, efficiency, placed, total) {
         iterations++;
         document.getElementById('info_iterations').innerHTML = iterations;
-        console.log('iteration!');
 
         if (!svglist || svglist.length == 0) {
-          console.error('svglist empty')
           return;
         }
         var bins = document.getElementById('bins');
@@ -617,6 +656,8 @@
   </div>
 
   <div id="svgnest">
+
+    <button id="sendresult"></button>
 
     <div id="controls">
       <ul class="nav">
@@ -995,7 +1036,7 @@
     <div id="bins"></div>
 
     <input id="fileinput" type="file" style="visibility:hidden" />
-    <input id="bininput" type="file" />
+    <input id="bininput" type="file" style="visibility:hidden" />
   </div>
 
   <div id="messagewrapper">

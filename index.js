@@ -1,12 +1,11 @@
 import puppeteer from 'puppeteer';
 import express from 'express';
-import fsPromise from 'fs/promises';
 import path from 'path';
-
-// const express = require("express");
-// const fsPromise = require("fs/promises");
+import cors from 'cors';
+import fs from 'fs';
 
 const app = express();
+app.use(cors());
 const port = 3000;
 
 function sleep(ms) {
@@ -15,20 +14,9 @@ function sleep(ms) {
   }))
 }
 
-async function getSvgStringFromFile(path) {
-  let svgString = await fsPromise.readFile(path, 'utf8');
-
-  svgString = svgString.replaceAll('\n', ' ');
-  return (svgString);
-}
-
 app.get("/", async (req, res) => {
-  // const partsSvg = await getSvgStringFromFile('./parts.svg');
-  // const binSvg = await getSvgStringFromFile('./bin.svg');
-
   const browser = await puppeteer.launch({headless: false});
   const page = await browser.newPage();
-  // await page.goto('file:///home/flo/Work/nesting_pttr_node_server/index.html');
   await page.goto('http://localhost:8000');
 
   const filePath = path.relative(process.cwd(), 'parts.svg');
@@ -43,12 +31,35 @@ app.get("/", async (req, res) => {
   // await bin.click();
   const startButton = await page.waitForSelector('#start');
   await startButton.click();
-  // const downloadButton = await page.waitForSelector('#download');
-  // await downloadButton.click();
 
+  // wait for at least 1 iteration, TODO improve it by passing iteration count to request, get iteration display field with puppeteer
+  await sleep(2000);
+
+  const sendButton = await page.waitForSelector('#sendresult');
+  await sendButton.click();
+
+  console.log('here')
   // await browser.close();
   res.send("Hello World!");
 });
+
+app.post("/uploadSvg", express.text(), (req, res) => {
+  console.log('output: ', req.body);
+  const svgContent = req.body;
+  const filename = `svg_${Date.now()}.svg`;
+  const dirPath = path.join(process.cwd(), 'downloads');
+  const filePath = path.join(dirPath, filename);
+
+  fs.mkdirSync(dirPath);
+  fs.writeFile(filePath, svgContent, 'utf-8', (err) => {
+    if (err) {
+      console.error(err);
+    }
+    else {
+      console.log('SVG file created');
+    }
+  })
+})
 
 app.listen(port, () => {
   console.log(`Nesting server listening on port ${port}!`);
