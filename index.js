@@ -15,7 +15,7 @@ function sleep(ms) {
 }
 
 app.get("/", async (req, res) => {
-  const browser = await puppeteer.launch({headless: false});
+  const browser = await puppeteer.launch({headless: 'new'});
   const page = await browser.newPage();
   await page.goto('http://localhost:8000');
 
@@ -27,8 +27,6 @@ app.get("/", async (req, res) => {
   const binInput = await page.waitForSelector('#bininput');
   await binInput.uploadFile(binPath);
 
-  // const bin = await page.waitForSelector('#DefaultBin');
-  // await bin.click();
   const startButton = await page.waitForSelector('#start');
   await startButton.click();
 
@@ -38,8 +36,7 @@ app.get("/", async (req, res) => {
   const sendButton = await page.waitForSelector('#sendresult');
   await sendButton.click();
 
-  console.log('here')
-  // await browser.close();
+  await browser.close();
   res.send("Hello World!");
 });
 
@@ -50,7 +47,7 @@ app.post("/uploadSvg", express.text(), (req, res) => {
   const dirPath = path.join(process.cwd(), 'downloads');
   const filePath = path.join(dirPath, filename);
 
-  fs.mkdirSync(dirPath);
+  fs.mkdirSync(dirPath, { recursive: true });
   fs.writeFile(filePath, svgContent, 'utf-8', (err) => {
     if (err) {
       console.error(err);
