@@ -344,7 +344,6 @@
               var parsedSvg = SvgParser.load(reader.result);
               SvgParser.clean();
 
-              // var parsedSvg = svgDocument.documentElement;
               for (var i = 0; i < svg.childNodes.length; i++) {
                 const node = svg.childNodes[i];
                 if (node.nodeType != 1) {
@@ -363,7 +362,6 @@
               console.log('bin successfully loaded');
 
               newBin.setAttribute('class', (newBin.getAttribute('class') ? newBin.getAttribute('class') + ' ' : '') + 'active');
-              // parsedSvg.setAttribute('class', (parsedSvg.getAttribute('class') ? parsedSvg.getAttribute('class') + ' ' : '') + 'active');
 
               start.className = 'button start animated bounce';
               message.className = '';

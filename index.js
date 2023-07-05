@@ -14,6 +14,9 @@ function sleep(ms) {
   }))
 }
 
+//TODO remove images, fonts, css, everything not needed for nesting
+
+//TODO change to POST, file and bin in request body, optional config, optional iteration count
 app.get("/", async (req, res) => {
   const browser = await puppeteer.launch({headless: 'new'});
   const page = await browser.newPage();
@@ -37,7 +40,7 @@ app.get("/", async (req, res) => {
   await sendButton.click();
 
   await browser.close();
-  res.send("Hello World!");
+  res.send("Nesting finshed!");
 });
 
 app.post("/uploadSvg", express.text(), (req, res) => {
