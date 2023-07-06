@@ -235,59 +235,6 @@
         handleFile(e.dataTransfer.files[0]);
       }
 
-
-      download.onclick = function () {
-        if (download.className == 'button download disabled') {
-          return false;
-        }
-
-        var bins = document.getElementById('bins');
-
-        if (bins.children.length == 0) {
-          message.innerHTML = 'No SVG to export';
-          message.className = 'error animated bounce';
-          return
-        }
-
-        var svg;
-        svg = display.querySelector('svg');
-
-        if (!svg) {
-          svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-        }
-
-        svg = svg.cloneNode(false);
-
-        // maintain stroke, fill etc of input
-        if (SvgNest.style) {
-          svg.appendChild(SvgNest.style);
-        }
-
-        var binHeight = parseInt(bins.children[0].getAttribute('height'));
-
-        for (var i = 0; i < bins.children.length; i++) {
-          var b = bins.children[i];
-          var group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-          group.setAttribute('transform', 'translate(0 ' + binHeight * 1.1 * i + ')');
-          for (var j = 0; j < b.children.length; j++) {
-            group.appendChild(b.children[j].cloneNode(true));
-          }
-
-          svg.appendChild(group);
-        }
-
-        var output;
-        if (typeof XMLSerializer != 'undefined') {
-          output = (new XMLSerializer()).serializeToString(svg);
-        }
-        else {
-          output = svg.outerHTML;
-        }
-
-        var blob = new Blob([output], { type: "image/svg+xml;charset=utf-8" });
-        saveAs(blob, "SVGnest-output.svg");
-      }
-
       var zoomlevel = 1.0;
 
       zoomin.onclick = function () {
@@ -323,52 +270,33 @@
         handleFile(e.target.files[0]);
       }
 
-      function handleBin(svg) {
-        bininput.onchange = function (e) {
-          var file = e.target.files[0];
-          if (!file) {
-            return;
-          }
-          if (!file.type || (file.type.search('svg') < 0 && file.type.search('xml') < 0 && file.type.search('text') < 0)) {
-            return
-          }
-          var reader = new FileReader();
-          var input = this;
-          reader.onload = function (e) {
-            input.value = null;
-            if (reader.result) {
-              if (display.className == 'disabled') {
-                return;
-              }
-              var newBin = null;
-              var parsedSvg = SvgParser.load(reader.result);
-              SvgParser.clean();
-
-              for (var i = 0; i < svg.childNodes.length; i++) {
-                const node = svg.childNodes[i];
-                if (node.nodeType != 1) {
-                  continue;
-                }
-                if (parsedSvg.childNodes[0].toString() == node.toString()) {
-                  newBin = node;
-                  break;
-                }
-              }
-              if (!newBin) {
-                console.error('bin not found in parts svg');
-                return;
-              }
-              window.SvgNest.setbin(newBin);
-              console.log('bin successfully loaded');
-
-              newBin.setAttribute('class', (newBin.getAttribute('class') ? newBin.getAttribute('class') + ' ' : '') + 'active');
-
-              start.className = 'button start animated bounce';
-              message.className = '';
-            }
-          }
-          reader.readAsText(file);
+      bininput.onchange = function (e) {
+        var file = e.target.files[0];
+        if (!file) {
+          return;
         }
+        if (!file.type || (file.type.search('svg') < 0 && file.type.search('xml') < 0 && file.type.search('text') < 0)) {
+          return
+        }
+        var reader = new FileReader();
+        var input = this;
+        reader.onload = function (e) {
+          input.value = null;
+          if (reader.result) {
+            if (display.className == 'disabled') {
+              return;
+            }
+            var newBin = null;
+            var parsedSvg = SvgParser.load(reader.result);
+            SvgParser.clean();
+            window.SvgNest.setbin(parsedSvg.childNodes[0]);
+            console.log('bin successfully loaded');
+
+            start.className = 'button start animated bounce';
+            message.className = '';
+          }
+        }
+        reader.readAsText(file);
       }
 
       function handleFile(file) {
@@ -418,10 +346,6 @@
             message.innerHTML = 'Click on the outline to use as the bin';
             message.className = 'active animated bounce';
             start.className = 'button start disabled';
-
-            // attachSvgListeners(svg);
-            // attachSvgListeners(wholeSVG);
-            handleBin(svg);
           }
         }
 
@@ -479,34 +403,6 @@
           body: output
         })
       }
-
-      // function attachSvgListeners(svg) {
-      //   // attach event listeners
-      //   for (var i = 0; i < svg.childNodes.length; i++) {
-      //     var node = svg.childNodes[i];
-      //     if (node.nodeType == 1) {
-      //       node.onclick = function () {
-      //         if (display.className == 'disabled') {
-      //           return;
-      //         }
-      //         var currentbin = document.querySelector('#select .active');
-      //         if (currentbin) {
-      //           var className = currentbin.getAttribute('class').replace('active', '').trim();
-      //           if (!className)
-      //             currentbin.removeAttribute('class');
-      //           else
-      //             currentbin.setAttribute('class', className);
-      //         }
-
-      //         window.SvgNest.setbin(this);
-      //         this.setAttribute('class', (this.getAttribute('class') ? this.getAttribute('class') + ' ' : '') + 'active');
-
-      //         start.className = 'button start animated bounce';
-      //         message.className = '';
-      //       }
-      //     }
-      //   }
-      // }
 
       var prevpercent = 0;
       var startTime = null;
