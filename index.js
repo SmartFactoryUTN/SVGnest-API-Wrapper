@@ -27,7 +27,7 @@ app.post("/", multer().fields([{name: 'bin'}, {name: 'parts'}]), async (req, res
   fs.writeFileSync(path.join(tmpPath, 'bin.svg'), req.files['bin'][0].buffer);
   fs.writeFileSync(path.join(tmpPath, 'parts.svg'), req.files['parts'][0].buffer);
 
-  const browser = await puppeteer.launch({headless: false});
+  const browser = await puppeteer.launch({headless: 'new'});
   const page = await browser.newPage();
   await page.goto('http://localhost:8000');
 
