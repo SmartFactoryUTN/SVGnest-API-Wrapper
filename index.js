@@ -12,22 +12,47 @@ const port = 3000;
 const downloadPath = path.join(process.cwd(), 'downloads');
 const tmpPath = path.join(process.cwd(), 'tmp');
 
-function sleep(ms) {
-  return (new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  }))
+const defaultIterationCount = 10;
+
+// observe for changes in selector, resolve if value reach targetValue, reject if timeout
+async function waitForValueChange(page, selector, targetValue, timeout) {
+  return (await page.evaluate((selector, targetValue, timeout) => {
+    return (new Promise((resolve, reject) => {
+      const element = document.querySelector(selector);
+
+      const observer = new MutationObserver(() => {
+        const currentValue = element.textContent;
+        if (currentValue == targetValue) {
+          console.log('value ok!')
+          observer.disconnect();
+          resolve();
+        }
+      });
+      observer.observe(element, { childList: true });
+      if (timeout) {
+        setTimeout(() => {
+          observer.disconnect();
+          reject(new Error(`Timeout waiting for value change in ${selector}`));
+        }, timeout)
+      }
+    }))
+  }, selector, targetValue, timeout))
 }
 
 //TODO remove images, fonts, css, everything not needed for nesting
 
-//TODO add to request: optional config, optional iteration count
-app.post("/", multer().fields([{name: 'bin'}, {name: 'parts'}]), async (req, res) => {
+//TODO add to request: optional config
+app.post("/", express.json(), async (req, res) => {
+  const svgBin = req.body.svgBin;
+  const svgParts = req.body.svgParts;
+  const iterationCount = req.body.iterationCount;
+
   // temporary directory to write bin and parts in order to send path to uploadFile(): TODO find a cleaner way to do it
   fs.mkdirSync(tmpPath, { recursive: true });
-  fs.writeFileSync(path.join(tmpPath, 'bin.svg'), req.files['bin'][0].buffer);
-  fs.writeFileSync(path.join(tmpPath, 'parts.svg'), req.files['parts'][0].buffer);
+  fs.writeFileSync(path.join(tmpPath, 'bin.svg'), svgBin, 'utf-8');
+  fs.writeFileSync(path.join(tmpPath, 'parts.svg'), svgParts, 'utf-8');
 
-  const browser = await puppeteer.launch({headless: false});
+  const browser = await puppeteer.launch({ headless: 'new' });
   const page = await browser.newPage();
   await page.goto('http://localhost:8000');
 
@@ -35,23 +60,20 @@ app.post("/", multer().fields([{name: 'bin'}, {name: 'parts'}]), async (req, res
   const partsInput = await page.waitForSelector('#fileinput');
   await partsInput.uploadFile(partsPath);
 
-  // const binPath = path.relative(process.cwd(), 'bin.svg');
   const binPath = path.join(tmpPath, 'bin.svg');
   const binInput = await page.waitForSelector('#bininput');
   await binInput.uploadFile(binPath);
 
-  fs.rmSync(tmpPath, { recursive: true, force: true});
+  fs.rmSync(tmpPath, { recursive: true, force: true });
 
   const startButton = await page.waitForSelector('#start');
   await startButton.click();
 
-  // wait for at least 1 iteration, TODO improve it by passing iteration count to request, get iteration display field with puppeteer
-  await sleep(2000);
+  await waitForValueChange(page, '#info_iterations', iterationCount || defaultIterationCount, 0);
 
   const sendButton = await page.waitForSelector('#sendresult');
   await sendButton.click();
-
-  // await browser.close();
+  await browser.close();
   res.send("Nesting finshed!");
 });
 
