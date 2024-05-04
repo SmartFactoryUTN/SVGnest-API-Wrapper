@@ -1,40 +1,20 @@
-# ![SVGNest](http://svgnest.com/github/logo2.png)
-
-**SVGNest**: A browser-based vector nesting tool.
-
-**Demo:** http://svgnest.com
-
-(requires SVG and webworker support). Mobile warning: running the demo is CPU intensive.
-
-references (PDF):
-- [López-Camacho *et al.* 2013](http://www.cs.stir.ac.uk/~goc/papers/EffectiveHueristic2DAOR2013.pdf)
-- [Kendall 2000](http://www.graham-kendall.com/papers/k2001.pdf)
-- [E.K. Burke *et al.* 2006](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.440.379&rep=rep1&type=pdf)
-
-## What is "nesting"?
-
-Given a square piece of material and some letters to be laser-cut:
-
-![letter nesting](http://svgnest.com/github/letters.png)
-
-We want to pack all the letters into the square, using as little material as possible. If a single square is not enough, we also want to minimize the number of squares used.
-
-In the CNC world this is called "[nesting](http://sigmanest.com/)", and [software](http://www.mynesting.com/) that [does this](http://www.autodesk.com/products/trunest/overview) is typically targeted at [industrial customers](http://www.hypertherm.com/en/Products/Automated_cutting/Nesting_software/) and [very expensive](http://www.nestfab.com/pricing/).
-
-SVGnest is a free and open-source alternative that solves this problem with the orbital approach outlined in [E.K. Burke *et al.* 2006], using a genetic algorithm for global optimization. It works for arbitrary containers and concave edge cases, and performs on-par with existing commercial software.
-
-![non-rectangular shapes](http://svgnest.com/github/shapes.png)
-
-It also features part-in-part support, for placing parts in the holes of other parts.
-
-![non-rectangular shapes](http://svgnest.com/github/recursion.png)
+# [SVGNest Readme](https://github.com/Jack000/SVGnest?tab=readme-ov-file#what-is-nesting)
 
 ## Usage
 
-Make sure all parts have been converted to outlines, and that no outlines overlap. Upload the SVG file and select one of the outlines to be used as the bin.
+- Node JS >= 10
+- NPM
 
-All other outlines are automatically processed as parts for nesting.
-
+1. From the project dir, run the command `node index.js`
+2. Execute a POST request to `http://localhost:3000/` with this payload
+    ```
+    {
+      "svgBin": "<svg width='2000' height='2000' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2048 2048'><path fill='none' d='M278 589 275 590 269 593 269 596 271 600 271 602 273 605 273 607 275 610 275 612 278 617 279 620 280 623 281 626 281 628 282 631 283 635 285 638 285 640 287 644 289 646 291 651 293 653 301 669 301 671 304 676 304 678 306 681 307 684 308 687 309 690 310 693 311 697 312 701 313 706 314 712 314 725 314 728 314 741 313 747 312 752 311 756 310 759 309 762 308 765 307 768 306 771 303 776 303 778 299 786 297 788 295 793 293 795 292 798 290 801 288 804 286 807 283 811 279 816 275 821 255 841 249 845 245 848 243 851 240 856 236 861 220 876 221 878 227 890 229 892 230 895 232 898 235 902 247 914 250 916 256 919 259 920 263 921 271 921 275 920 278 919 281 918 285 916 287 914 290 913 294 910 298 907 305 901 320 886 328 877 334 870 339 864 343 859 346 855 350 850 353 846 356 842 358 839 361 835 363 832 365 829 367 826 369 823 371 820 373 817 374 814 376 812 377 809 379 807 388 789 388 787 390 784 390 782 392 779 393 776 394 773 395 769 396 765 397 759 398 750 398 739 397 730 396 725 395 721 394 717 393 714 392 711 391 708 390 705 388 702 388 700 384 693 384 691 383 689 381 687 377 678 375 676 374 673 372 670 370 667 368 665 367 662 364 658 362 655 360 652 357 648 354 644 350 639 346 634 341 628 331 617 325 611 316 603 312 600 308 597 305 595 297 591 294 590 291 589 ' style='stroke:pink'/></svg>",
+      "svgParts": "<svg width='2000' height='2000' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2048 2048'><polygon fill='none' stroke='#010101' stroke-miterlimit='10' points='1031.068,566.961 1031.068,577.655 1043.723,577.965 1044.294,568128 ' /><polygon fill='none' stroke='#010101' stroke-miterlimit='10' points='582.528,372.964 624.57,373.468 631.906,347.062 620.936,326.309 609.533,329.092 592.663,309.654 560.571,335.878 ' /><polygon fill='none' stroke='#010101' stroke-miterlimit='10' points='661.185,157.016 652.101,203.035 718.574,209.716 734.568,180.887 ' /><polygon fill='none' stroke='#010101' stroke-miterlimit='10' points='1057.909,602.939 1049.363,604.521 1043.723,597.907 1046.628,589.714 1055.174,588.14 1060.814,594.753 ' /></svg>",
+      "iterationCount": "35"
+    }
+    ```
+3. The resulting SVG will appear in `download` folder, it can be rendered in html. 
 ## Outline of algorithm
 
 While [good heuristics](http://cgi.csc.liv.ac.uk/~epa/surveyhtml.html) exist for the rectangular bin packing problem, in the real world we are concerned with irregular shapes.
@@ -44,71 +24,4 @@ The strategy is made of two parts:
 - the placement strategy (ie. how do I insert each part into a bin?)
 - and the optimization strategy (ie. what's the best order of insertions?)
 
-### Placing the part
-
-The key concept here is the "No Fit Polygon".
-
-Given polygons A and B, we want to "orbit" B around A such that they always touch but do not intersect.
-
-![No Fit Polygon example](http://svgnest.com/github/nfp.png)
-
-The resulting orbit is the NFP. The NFP contains all possible placements of B that touches the previously placed parts. We can then choose a point on the NFP as the placement position using some heuristics.
-
-Similarly we can construct an "Inner Fit Polygon" for the part and the bin. This is the same as the NFP, except the orbiting polygon is inside the stationary one.
-
-When two or more parts have already been placed, we can take the union of the NFPs of the previously placed parts.
-
-![No Fit Polygon example](http://svgnest.com/github/nfp2.png)
-
-This means that we need to compute O(nlogn) NFPs to complete the first packing. While there are ways to mitigate this, we take the brute-force approach which has good properties for the optimization algo.
-
 ### Optimization
-
-Now that we can place the parts, we need to optimize the insertion order. Here's an example of a bad insertion order:
-
-![Bad insertion order](http://svgnest.com/github/badnest.png)
-
-If the large "C" is placed last, the concave space inside it won't be utilized because all the parts that could have filled it have already been placed.
-
-To solve this, we use the "first-fit-decreasing" heuristic. Larger parts are placed first, and smaller parts last. This is quite intuitive, as the smaller parts tend to act as "sand" to fill the gaps left by the larger parts.
-
-![Good insertion order](http://svgnest.com/github/goodnest.png)
-
-While this strategy gives us a good start, we want to explore more of the solution space. We could simply randomize the insertion order, but we can probably do better with a genetic algorithm. (If you don't know what a GA is, [this article](http://www.ai-junkie.com/ga/intro/gat1.html) is a very approachable read)
-
-## Evaluating fitness
-
-In our GA the insertion order and the rotation of the parts form the gene. The fitness function follows these rules:
-
-1. Minimize the number of unplaceable parts (parts that cannot fit any bin due to its rotation)
-2. Minimize the number of bins used
-3. Minimize the *width* of all placed parts
-
-The third one is rather arbitrary, as we can also optimize for rectangular bounds or a minimal concave hull. In real-world use the material to be cut tends to be rectangular, and those options tend to result in long slivers of un-used material.
-
-Because small mutations in the gene cause potentially large changes in overall fitness, the individuals of the population can be very similar. By caching NFPs new individuals can be evaluated very quickly.
-
-## Performance
-
-![SVGnest comparison](http://svgnest.com/github/comparison1.png)
-
-Performs similarly to commercial software, after both have run for about 5 minutes.
-
-## Configuration parameters
-
-- **Space between parts:** Minimum space between parts (eg. for laser kerf, CNC offset etc.)
-- **Curve tolerance:** The maximum error allowed for linear approximations of Bezier paths and arcs, in SVG units or "pixels". Decrease this value if curved parts appear to slightly overlap.
-- **Part rotations:** The *possible* number of rotations to evaluate for each part. eg. 4 for only the cardinal directions. Larger values may improve results, but will be slower to converge.
-- **GA population:** The population size for the Genetic Algorithm
-- **GA mutation rate:** The probability of mutation for each gene or part placement. Values from 1-50
-- **Part in part:** When enabled, places parts in the holes of other parts. This is off by default as it can be resource intensive
-- **Explore concave areas:** When enabled, solves the concave edge case at a cost of some performance and placement robustness:
-
-![Concave flag example](http://svgnest.com/github/concave.png)
-
-## To-do
-
-- ~~Recursive placement (putting parts in holes of other parts)~~
-- Customize fitness function (gravity direction, etc)
-- kill worker threads when stop button is clicked
-- fix certain edge cases in NFP generation
