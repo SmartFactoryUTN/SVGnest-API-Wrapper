@@ -128,7 +128,7 @@
 		
 		// progressCallback is called when progress is made
 		// displayCallback is called when a new placement has been made
-		this.start = function(progressCallback, displayCallback){						
+		this.start = function(progressCallback, displayCallback){
 			if(!svg || !bin){
 				return false;
 			}
@@ -241,25 +241,6 @@
 		}
 		
 		this.launchWorkers = function(tree, binPolygon, config, progressCallback, displayCallback){
-			function shuffle(array) {
-			  var currentIndex = array.length, temporaryValue, randomIndex ;
-
-			  // While there remain elements to shuffle...
-			  while (0 !== currentIndex) {
-
-				// Pick a remaining element...
-				randomIndex = Math.floor(Math.random() * currentIndex);
-				currentIndex -= 1;
-
-				// And swap it with the current element.
-				temporaryValue = array[currentIndex];
-				array[currentIndex] = array[randomIndex];
-				array[randomIndex] = temporaryValue;
-			  }
-
-			  return array;
-			}
-			
 			var i,j;
 			
 			if(GA === null){
@@ -452,7 +433,6 @@
 										nfp.push(cnfp[j]);
 									}
 								}
-							
 							}
 						}
 					}
@@ -576,6 +556,7 @@
 								numPlacedParts++;
 							}
 						}
+
 						displayCallback(self.applyPlacement(best.placements), placedArea/totalArea, numPlacedParts, numParts);
 					}
 					else{
@@ -822,7 +803,7 @@
 		this.config = config || { populationSize: 10, mutationRate: 10, rotations: 4 };
 		this.binBounds = GeometryUtil.getPolygonBounds(bin);
 		
-		// population is an array of individuals. Each individual is a object representing the order of insertion and the angle each part is rotated
+		// population is an array of individuals. Each individual is an object representing the order of insertion and the angle each part is rotated
 		var angles = [];
 		for(var i=0; i<adam.length; i++){
 			angles.push(this.randomAngle(adam[i]));

@@ -19,29 +19,55 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const defaultIterationCount = 10;
 
 // observe for changes in selector, resolve if value reach targetValue, reject if timeout
-async function waitForValueChange(page, selector, targetValue, timeout) {
-    return (await page.evaluate((selector, targetValue, timeout) => {
-        return (new Promise((resolve, reject) => {
-            const element = document.querySelector(selector);
+async function waitForValueChange(page, selector1, targetValue1, selector2, targetValue2, timeout) {
+    return await page.evaluate((selector1, targetValue1, selector2, targetValue2, timeout) => {
+        return new Promise((resolve, reject) => {
+            // Select both elements
+            const iterations = document.querySelector(selector1);
+            const efficiency = document.querySelector(selector2);
 
-            const observer = new MutationObserver(() => {
-                const currentValue = element.textContent;
-                if (currentValue == targetValue) {
-                    console.log('value ok!')
-                    observer.disconnect();
+            // Function to check values and resolve the promise if conditions are met
+            const checkValues = () => {
+                const currentIterationCount = iterations.textContent;
+                const currentEfficiency = efficiency.textContent;
+
+                console.log(`Current values are '${currentIterationCount}' for '${iterations.id}' and '${currentEfficiency}' for '${efficiency.id}'`);
+
+                if (currentIterationCount === targetValue1) {
+                    console.log(`Value '${currentIterationCount}' for '${iterations.id}' matches target '${targetValue1}'`);
+                    observer1.disconnect();
+                    observer2.disconnect();
+                    resolve();
+                }else if (currentEfficiency >= targetValue2){
+                    console.log(`Value '${currentEfficiency}' for '${efficiency.id}' reached target '${targetValue2}'`);
+                    observer1.disconnect();
+                    observer2.disconnect();
                     resolve();
                 }
-            });
-            observer.observe(element, { childList: true });
+            };
+
+            // Create observers for both elements
+            const observer1 = new MutationObserver(checkValues);
+            const observer2 = new MutationObserver(checkValues);
+
+            // Start observing both elements
+            observer1.observe(iterations, { childList: true, subtree: true, characterData: true });
+            observer2.observe(efficiency, { childList: true, subtree: true, characterData: true });
+
+            // Set a timeout to reject the promise if the condition is not met within the timeout period
             if (timeout) {
                 setTimeout(() => {
-                    observer.disconnect();
-                    reject(new Error(`Timeout waiting for value change in ${selector}`));
-                }, timeout)
+                    console.log(`Timeout after ${timeout}ms waiting for value changes in '${iterations}' or '${efficiency}'`);
+                    observer1.disconnect();
+                    observer2.disconnect();
+                    reject(new Error(`Timeout waiting for value changes in ${selector1} or ${selector2}`));
+                }, timeout);
             }
-        }))
-    }, selector, targetValue, timeout))
+        });
+    }, selector1, targetValue1, selector2, targetValue2, timeout);
 }
+
+
 
 //TODO remove images, fonts, css, everything not needed for nesting
 
@@ -59,6 +85,7 @@ app.post("/", express.json(), async (req, res) => {
     const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
     // await page.goto('file:///Users/gaston.vidal/PhpstormProjects/UTN/nesting-2d/SVGnest-API-Wrapper/index.html', { timeout: 0});
+    page.on('console', msg => console.log('PAGE LOG:', msg.text()));
     await page.goto('http://localhost:3000/', { timeout: 0});
 
     const partsPath = path.join(tmpPath, 'parts.svg');
@@ -74,7 +101,7 @@ app.post("/", express.json(), async (req, res) => {
     const startButton = await page.waitForSelector('#start');
     await startButton.click();
 
-    await waitForValueChange(page, '#info_iterations', iterationCount || defaultIterationCount, 0);
+    await waitForValueChange(page, '#info_iterations', iterationCount || defaultIterationCount, '#info_efficiency', 10, 0);
 
     const sendButton = await page.waitForSelector('#sendresult');
     await sendButton.click();
