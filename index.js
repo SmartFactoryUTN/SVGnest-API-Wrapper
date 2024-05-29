@@ -3,7 +3,6 @@ import express from 'express';
 import path from 'path';
 import cors from 'cors';
 import fs from 'fs';
-import multer from 'multer';
 
 const app = express();
 app.use(cors());
@@ -66,9 +65,6 @@ async function waitForValueChange(page, selector1, targetValue1, selector2, targ
         });
     }, selector1, targetValue1, selector2, targetValue2, timeout);
 }
-
-
-
 //TODO remove images, fonts, css, everything not needed for nesting
 
 //TODO add to request: optional config
@@ -101,7 +97,7 @@ app.post("/", express.json(), async (req, res) => {
     const startButton = await page.waitForSelector('#start');
     await startButton.click();
 
-    await waitForValueChange(page, '#info_iterations', iterationCount || defaultIterationCount, '#info_efficiency', 10, 0);
+    await waitForValueChange(page, '#info_iterations', iterationCount || defaultIterationCount, '#info_efficiency', 90, 0);
 
     const sendButton = await page.waitForSelector('#sendresult');
     await sendButton.click();
