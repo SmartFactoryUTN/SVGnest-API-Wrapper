@@ -4,10 +4,7 @@
 (function(DOMParser) {
 	"use strict";
 
-	var
-	  proto = DOMParser.prototype
-	, nativeParse = proto.parseFromString
-	;
+	var proto = DOMParser.prototype, nativeParse = proto.parseFromString;
 
 	// Firefox/Opera/IE throw errors on unsupported types
 	try {

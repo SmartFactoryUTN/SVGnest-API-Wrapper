@@ -10,7 +10,7 @@ const port = 3000;
 const downloadPath = path.join(process.cwd(), 'downloads');
 const tmpPath = path.join(process.cwd(), 'tmp');
 
-const svgString = "<svg width='2000' height='2000' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2048 2048'><polygon fill='none' stroke='#010101' stroke-miterlimit='10' points='1031.068,566.961 1031.068,577.655 1043.723,577.965 1044.294,568128 ' /><polygon fill='none' stroke='#010101' stroke-miterlimit='10' points='582.528,372.964 624.57,373.468 631.906,347.062 620.936,326.309 609.533,329.092 592.663,309.654 560.571,335.878 ' /><polygon fill='none' stroke='#010101' stroke-miterlimit='10' points='661.185,157.016 652.101,203.035 718.574,209.716 734.568,180.887 ' /><polygon fill='none' stroke='#010101' stroke-miterlimit='10' points='1057.909,602.939 1049.363,604.521 1043.723,597.907 1046.628,589.714 1055.174,588.14 1060.814,594.753 ' /></svg>";
+const svgString = "<svg width='2000' height='2000' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2048 2048'><polygon fill='none' stroke='#010101' stroke-miterlimit='10' points='1031.068,566.961 1031.068,577.655 1043.723,577.965 1044.294,568128' /><polygon fill='none' stroke='#010101' stroke-miterlimit='10' points='582.528,372.964 624.57,373.468 631.906,347.062 620.936,326.309 609.533,329.092 592.663,309.654 560.571,335.878 ' /><polygon fill='none' stroke='#010101' stroke-miterlimit='10' points='661.185,157.016 652.101,203.035 718.574,209.716 734.568,180.887 ' /><polygon fill='none' stroke='#010101' stroke-miterlimit='10' points='1057.909,602.939 1049.363,604.521 1043.723,597.907 1046.628,589.714 1055.174,588.14 1060.814,594.753 ' /></svg>";
 
 const server = http.createServer((req,res) => {
 

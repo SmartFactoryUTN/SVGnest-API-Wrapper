@@ -1,3 +1,5 @@
+import SvgParser from "./SvgParser.js";
+
 export default class SvgNest {
 
     constructor(svgString) {
@@ -35,10 +37,12 @@ export default class SvgNest {
         let workerTimer = null;
         let progress = 0;
 
+        let svgParser = null;
+
         this.parseSvg(svgString);
     }
 
-    parseSvg = function (svgstring) {
+    parseSvg(svgstring) {
         // reset if in progress
         this.stop();
 
@@ -46,14 +50,16 @@ export default class SvgNest {
         this.binPolygon = null;
         this.tree = null;
 
+        this.svgParser = new SvgParser();
+
         // parse svg
-        this.svg = SvgParser.load(svgstring);
+        this.svg = this.svgParser.load(svgstring);
 
-        this.style = SvgParser.getStyle();
+        this.style = this.svgParser.getStyle();
 
-        this.svg = SvgParser.clean();
+        this.svg = this.svgParser.cleanInput();
 
-        this.tree = this.getParts(svg.childNodes);
+        this.tree = this.getParts(this.svg.childNodes);
 
         //re-order elements such that deeper elements are on top, so they can be moused over
         function zorder(paths) {
@@ -66,7 +72,7 @@ export default class SvgNest {
             }
         }
 
-        return svg;
+        return this.svg;
     }
 
     setbin = function (element) {
@@ -111,7 +117,7 @@ export default class SvgNest {
             config.exploreConcave = !!c.exploreConcave;
         }
 
-        SvgParser.config({tolerance: config.curveTolerance});
+        this.svgParser.config({tolerance: config.curveTolerance});
 
         this.best = null;
         this.nfpCache = {};
@@ -124,20 +130,20 @@ export default class SvgNest {
     // progressCallback is called when progress is made
     // displayCallback is called when a new placement has been made
     start(progressCallback, displayCallback) {
-        if (!svg || !bin) {
+        if (!this.svg || !this.bin) {
             return false;
         }
 
         this.parts = Array.prototype.slice.call(svg.childNodes);
-        var binindex = parts.indexOf(bin);
+        let binindex = this.parts.indexOf(this.bin);
 
         if (binindex >= 0) {
             // don't process bin as a part of the tree
-            parts.splice(binindex, 1);
+            this.parts.parts.splice(binindex, 1);
         }
 
         // build tree without bin
-        this.tree = this.getParts(parts.slice(0));
+        this.tree = this.getParts(this.parts.slice(0));
 
         offsetTree(tree, 0.5 * config.spacing, this.polygonOffset.bind(this));
 
@@ -156,10 +162,10 @@ export default class SvgNest {
             }
         }
 
-        this.binPolygon = SvgParser.polygonify(bin);
+        this.binPolygon = this.svgParser.polygonify(bin);
         this.binPolygon = this.cleanPolygon(binPolygon);
 
-        if (!binPolygon || binPolygon.length < 3) {
+        if (!this.binPolygon || this.binPolygon.length < 3) {
             return false;
         }
 
@@ -173,15 +179,15 @@ export default class SvgNest {
             }
         }
 
-        binPolygon.id = -1;
+        this.binPolygon.id = -1;
 
         // put bin on origin
-        var xbinmax = binPolygon[0].x;
-        var xbinmin = binPolygon[0].x;
-        var ybinmax = binPolygon[0].y;
-        var ybinmin = binPolygon[0].y;
+        let xbinmax = this.binPolygon[0].x;
+        let xbinmin = this.binPolygon[0].x;
+        let ybinmax = this.binPolygon[0].y;
+        let ybinmin = this.binPolygon[0].y;
 
-        for (var i = 1; i < binPolygon.length; i++) {
+        for (var i = 1; i < this.binPolygon.length; i++) {
             if (binPolygon[i].x > xbinmax) {
                 xbinmax = binPolygon[i].x;
             } else if (binPolygon[i].x < xbinmin) {
@@ -194,38 +200,38 @@ export default class SvgNest {
             }
         }
 
-        for (i = 0; i < binPolygon.length; i++) {
+        for (i = 0; i < this.binPolygon.length; i++) {
             binPolygon[i].x -= xbinmin;
             binPolygon[i].y -= ybinmin;
         }
 
-        binPolygon.width = xbinmax - xbinmin;
-        binPolygon.height = ybinmax - ybinmin;
+        this.binPolygon.width = xbinmax - xbinmin;
+        this.binPolygon.height = ybinmax - ybinmin;
 
         // all paths need to have the same winding direction
-        if (GeometryUtil.polygonArea(binPolygon) > 0) {
+        if (GeometryUtil.polygonArea(this.binPolygon) > 0) {
             binPolygon.reverse();
         }
 
         // remove duplicate endpoints, ensure counterclockwise winding direction
-        for (i = 0; i < tree.length; i++) {
-            var start = tree[i][0];
-            var end = tree[i][tree[i].length - 1];
-            if (start == end || (GeometryUtil.almostEqual(start.x, end.x) && GeometryUtil.almostEqual(start.y, end.y))) {
-                tree[i].pop();
+        for (i = 0; i < this.tree.length; i++) {
+            let start = this.tree[i][0];
+            let end = this.tree[i][this.tree[i].length - 1];
+            if (start === end || (GeometryUtil.almostEqual(start.x, end.x) && GeometryUtil.almostEqual(start.y, end.y))) {
+                this.tree[i].pop();
             }
 
-            if (GeometryUtil.polygonArea(tree[i]) > 0) {
-                tree[i].reverse();
+            if (GeometryUtil.polygonArea(this.tree[i]) > 0) {
+                this.tree[i].reverse();
             }
         }
 
-        var self = this;
+        let self = this;
         this.working = false;
 
         this.workerTimer = setInterval(function () {
             if (!self.working) {
-                self.launchWorkers.call(self, tree, binPolygon, config, progressCallback, displayCallback);
+                self.launchWorkers.call(self, this.tree, this.binPolygon, config, progressCallback, displayCallback);
                 self.working = true;
             }
 
@@ -234,11 +240,11 @@ export default class SvgNest {
     }
 
     launchWorkers(tree, binPolygon, config, progressCallback, displayCallback) {
-        var i, j;
+        let i, j;
 
         if (this.GA === null) {
             // initiate new GA
-            var adam = tree.slice(0);
+            let adam = tree.slice(0);
 
             // seed with decreasing area
             adam.sort(function (a, b) {
@@ -566,8 +572,9 @@ export default class SvgNest {
         var polygons = [];
 
         var numChildren = paths.length;
+
         for (i = 0; i < numChildren; i++) {
-            var poly = SvgParser.polygonify(paths[i]);
+            var poly = this.svgParser.polygonify(paths[i]);
             poly = this.cleanPolygon(poly);
 
             // todo: warn user if poly could not be processed and is excluded from the nest
